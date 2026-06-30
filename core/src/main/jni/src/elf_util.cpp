@@ -57,7 +57,11 @@ ElfImg::ElfImg(std::string_view base_name) : elf(base_name) {
         LOGE("lseek() failed for {}", elf);
     }
 
-    header = reinterpret_cast<decltype(header)>(mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0));
+    lseek(fd, 0, SEEK_SET);
+    header = reinterpret_cast<decltype(header)>(malloc(size));
+    if (header) {
+        read(fd, header, size);
+    }
 
     close(fd);
     parse(header);
@@ -345,9 +349,9 @@ ElfImg::~ElfImg() {
         free(buffer);
         buffer = nullptr;
     }
-    //use mmap
+    //use malloc
     if (header) {
-        munmap(header, size);
+        free(header);
     }
 }
 
